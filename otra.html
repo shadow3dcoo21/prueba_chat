@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Formulario de Imagen</title>
+  <script src="/socket.io/socket.io.js"></script>
+  <style>
+    .image_ {
+      width: 40px;
+      height: 40px;
+    }
+    .cuerpo_mensaje{
+    background-color: transparent;
+    width: 350px;
+    height: 500px;
+    
+
+}
+.cuerpo_me{
+  width: 350px;
+    height: 600px;
+    
+    overflow: hidden;
+    
+}
+.datos__{
+    background-color: rgb(28, 66, 18);
+    width: 100%;
+    height: 50px;
+    display: flex;
+    flex-direction: row;
+}
+.perfil_u{
+    width: 20%;
+    background-color: transparent;
+    justify-content: center;
+    align-items: center;
+}
+.nombre_u{
+    width: 70%;
+    background-color: transparent;
+    color: white;
+}
+.cuerpo_me{
+    background-color: rgb(181, 180, 153);
+    width: 100%;
+    height: 400px;
+    margin:auto;
+}
+.enviar_m{
+  background-color: rgb(181, 180, 153);
+  border: 1px solid rgb(158, 158, 158);
+  pad: 3px;
+  border-radius: 10px;
+  width: 100%;
+  margin: auto;
+}
+.fomulario__{
+  width: 90%;
+  margin: auto;
+  background-color: transparent;
+
+}
+#lista-mensajes {
+  list-style-type: none;
+  padding: 0;
+}
+
+.mensaje {
+  display: flex;
+  justify-content: flex-end; /* Alinea los mensajes enviados a la derecha */
+  margin-bottom: 10px;
+}
+
+.mensaje-enviado {
+  justify-content: flex-end; /* Alinea los mensajes enviados a la derecha */
+  
+}
+
+.mensaje-recibido {
+  justify-content: flex-start; /* Alinea los mensajes recibidos a la izquierda */
+  
+}
+
+.mensaje > span {
+  padding: 5px;
+  border-radius: 5px;
+  background-color: #e0e0e0;
+  margin-left: 10px;
+  max-width: 70%; /* Limita el ancho del mensaje */
+}
+
+.image_ {
+  width: 40px;
+  height: 40px;
+}
+
+.image_2{
+  width: 50px;
+  height: 50px;
+  border-radius: 25px;
+  margin-left: 25px;
+}
+
+.usuaro_arriba{
+  font-size: 15pt;
+  text-align: left;
+  margin-left: 10px;
+  background-color: transparent;
+}
+.type__{
+  border-radius: 20px;
+  width: 70%;
+  height: 25px;
+  background-color: rgb(179, 176, 172);
+  padding: 5px;
+  border: none;
+  text-align: center;
+  color: white;
+}
+.boton__{
+  width: 25%;
+  border-radius: 10px;
+  height: 35px;
+  padding: 5px;
+  border: none;
+  background-color: rgb(59, 59, 131);
+  color: white;
+}
+
+  </style>
+  <style  src="style.css"></style>
+</head>
+<body>
+  <h1>Formulario de Imagen</h1>
+  <form id="formImagen" action="/upload" method="POST" enctype="multipart/form-data">
+    <label for="nombre">Nombre:</label>
+    <input type="text" id="nombre" name="nombre" required><br><br>
+    <label for="imagen">Imagen:</label>
+    <input type="file" id="imagen" name="imagen" accept="image/*" required><br><br>
+    <button type="submit">Enviar</button>
+  </form>
+
+  <div id="resultado"></div>
+
+  <div id="chat" style="display: none;">
+    <h2>Bienvenido, <span id="nombreUsuarioMostrado"></span>!</h2>
+    <img id="imagenMostrada" src="" alt="Imagen del usuario">
+
+    <h1>Chat</h1>
+    
+
+    <div class="cuerpo_mensaje">
+      <div class="datos__">
+        <div class="perfil_u" id="perfil_image">
+          
+        </div>
+        <div class="nombre_u" id="usuario__">
+          far
+        </div>
+      </div>
+      <div class="cuerpo_me">
+        <ul id="lista-mensajes"></ul>
+      </div>
+      <div class="enviar_m">
+        <form id="formMensajes" class="fomulario__">
+          <input class="type__" type="text" id="mensaje" placeholder="Escribe tu mensaje">
+          <button class="boton__" type="submit">Enviar</button>
+        </form>
+      </div>
+
+    </div>
+
+    
+  </div>
+
+  <script>
+    var socket = io();
+
+//Aqui comienza con dentro de document.addEventListener
+//lo que hace es verificar si todo el doom cargo en la pagina actual
+
+const imageUrls = [
+  'https://www.educaciontrespuntocero.com/wp-content/uploads/2020/04/mejores-bancos-de-imagenes-gratis.jpg',
+  'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRKZfufh4yxTPVQmTZXzB_AJxpCI44-r6v3EF4G9KOKIQ&s',
+  
+  // Agrega más URLs de imágenes según sea necesario
+];
+document.addEventListener('DOMContentLoaded', function() {
+  var nombreUsuario = null;
+  var imagenFile = null;
+
+  const form = document.getElementById('formImagen');//en form guardo una referencia de un form que tenga como id formimagen
+  const resultado = document.getElementById('resultado');//igual aqui
+  const mensajes=document.getElementById('formMensajes');
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();//evita que el formulario se envie , cuando se presiona enviar se ejcuta este evento , para que puedas
+    //hacer lo que quieras con eso y lo envia sin que la pagina se recargue.
+
+
+    const formData = new FormData(form);//aqui guarda los datos del formulario , los datos especificos que se van a enviar
+    const response = await fetch('/upload', {
+      method: 'POST',
+      body: formData
+    });
+    
+    const data = await response.json();//convierte la respuesta del servidro json en javascript .
+    
+    
+    document.getElementById('chat').style.display = 'block';
+    
+    var integrar=document.getElementById('perfil_image');
+    integrar.innerHTML = `<div><img class="image_2" src="${data.imageUrl}" alt="Imagen"></div>`;
+
+    var integrar2=document.getElementById('usuario__');
+    integrar2.innerHTML = `<p class="usuaro_arriba">${data.nombre}</p>`;
+
+    
+    nombreUsuario = document.getElementById('nombre').value;
+    imagenFile = document.getElementById('imagen').value;
+
+    form.reset();
+  });
+
+  mensajes.addEventListener('submit', function(event) {
+    event.preventDefault();//evita enviar el formulario
+    var mensaje = document.getElementById('mensaje').value;
+
+    if (mensaje.trim() !== '') {
+      socket.emit('chat message', {nombre: nombreUsuario, mensaje: mensaje });
+      document.getElementById('mensaje').value = '';
+    } else {
+      alert('Por favor ingrese un mensaje válido.');
+    }
+  });
+  
+   // Función para recibir mensajes del servidor
+   socket.on('chat message', function(data) {
+  var listaMensajes = document.getElementById('lista-mensajes');
+  var mensaje = document.createElement('li');
+  const randomImageUrl = imageUrls[Math.floor(Math.random() * imageUrls.length)];
+  // Crear un div para encapsular los elementos del mensaje
+  var mensajeDiv = document.createElement('div');
+  mensajeDiv.className = 'mensaje-container'; // Clase CSS para el contenedor del mensaje
+
+  // Crear un elemento <img> para mostrar la imagen
+  var imagenElement = document.createElement('img');
+  imagenElement.className = 'image_'; // Clase CSS para el estilo de la imagen
+  
+  imagenElement.src = randomImageUrl; // URL de la imagen
+  imagenElement.alt = 'Imagen'; // Texto alternativo para la imagen
+
+  // Agregar la imagen al div del mensaje
+  mensajeDiv.appendChild(imagenElement);
+
+  // Crear un elemento <span> para mostrar la hora
+  var ahora = new Date();
+  var horaElement = document.createElement('span');
+  horaElement.textContent = ahora.getHours() + ':' + ahora.getMinutes(); // Formato HH:MM
+  horaElement.classList.add('hora-mensaje'); // Clase CSS para estilizar la hora
+
+  // Agregar la hora al div del mensaje
+  mensajeDiv.appendChild(horaElement);
+
+  // Crear un elemento <span> para mostrar el nombre de usuario y mensaje
+  var usuarioMensajeElement = document.createElement('span');
+  usuarioMensajeElement.textContent = ' - '+ data.nombre + ': ' + data.mensaje; // Agregar usuario y mensaje al elemento
+  mensajeDiv.appendChild(usuarioMensajeElement);
+
+  // Agregar clase según el origen del mensaje al div del mensaje
+  if (data.origen === 'enviado') {
+    mensajeDiv.classList.add('mensaje-enviado');
+  } else {
+    mensajeDiv.classList.add('mensaje-recibido');
+  }
+
+  // Agregar el div completo del mensaje a la lista de mensajes
+  mensaje.appendChild(mensajeDiv);
+  listaMensajes.appendChild(mensaje);
+});
+
+
+
+  
+
+});
+  </script>
+</body>
+</html>

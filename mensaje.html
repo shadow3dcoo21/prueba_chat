@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chat con Socket.IO</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        var socket = io();
+
+
+        document.addEventListener('DOMContentLoaded', function() {
+            var nombreUsuario = null;
+            var formRegistro = document.getElementById('formRegistro');
+
+            formRegistro.addEventListener('submit', function(event) {
+                event.preventDefault();
+
+                var formData = new FormData(formRegistro);
+
+                fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Manejar la respuesta del servidor
+                    console.log(data); // Aquí puedes trabajar con los datos recibidos
+                    alert('Registro exitoso');
+
+                    // Mostrar la imagen recibida en la página
+                    var imagenMostrada = document.getElementById('imagenMostrada');
+                    imagenMostrada.src = data.imageUrl;
+
+                    // Puedes redirigir al usuario a otra página si lo deseas
+                    // window.location.href = '/otra-pagina';
+                })
+
+                .catch(error => {
+                    console.error('Error al procesar el formulario:', error);
+                    alert('Hubo un error al procesar el formulario');
+                });
+            });   
+
+
+
+
+
+            // Escuchar el evento 'nombreUsuario' para recibir el nombre de usuario del servidor
+            socket.on('nombreUsuario', function(data) {
+                nombreUsuario = data.nombre;
+                document.getElementById('nombreUsuarioMostrado').textContent = nombreUsuario;
+            });
+
+            // Evento al enviar el formulario de registro
+            document.getElementById('formRegistro').addEventListener('submit', function(event) {
+                event.preventDefault();
+
+                nombreUsuario = document.getElementById('nombreUsuario').value;
+                var imagenPerfil = document.getElementById('imagenPerfil').files[0];
+
+                if (nombreUsuario.trim() !== '') {
+                    socket.emit('registroUsuario', { nombre: nombre, imagen: imagen });
+
+                    document.getElementById('registro').style.display = 'none';
+                    document.getElementById('chat').style.display = 'block';
+                } else {
+                    alert('Por favor ingrese un nombre de usuario válido.');
+                }
+            });
+
+            // Evento al enviar un mensaje
+            document.getElementById('formMensajes').addEventListener('submit', function(event) {
+                event.preventDefault();
+
+                var mensaje = document.getElementById('mensaje').value;
+
+                if (mensaje.trim() !== '') {
+                    socket.emit('chat message', { nombre: nombre, mensaje: mensaje });
+
+                    document.getElementById('mensaje').value = '';
+                } else {
+                    alert('Por favor ingrese un mensaje válido.');
+                }
+            });
+
+            // Función para recibir mensajes del servidor
+            socket.on('chat message', function(data) {
+                var listaMensajes = document.getElementById('lista-mensajes');
+                var mensaje = document.createElement('li');
+                mensaje.textContent = data.nombre + ': ' + data.mensaje;
+                listaMensajes.appendChild(mensaje);
+            });
+        });
+    </script>
+</head>
+<body>
+    <div id="registro">
+        <h1>Registro</h1>
+        <form id="formRegistro" method="POST" action="/upload" enctype="multipart/form-data">
+            <input type="text" id="nombre" placeholder="Nombre de usuario">
+            <input type="file" id="imagen" accept="image/*">
+            <button type="submit">Registrarse</button>
+        </form>
+    </div>
+
+    <div id="chat" style="display: none;">
+        <h2>Bienvenido,<span id="nombreUsuarioMostrado" ></span>!</h2>
+        <img id="imagenMostrada" src="" alt="Imagen del usuario">
+
+        <h1>Chat</h1>
+        <form id="formMensajes">
+            <input type="text" id="mensaje" placeholder="Escribe tu mensaje">
+            <button type="submit">Enviar</button>
+        </form>
+
+        <h2>Mensajes</h2>
+        <ul id="lista-mensajes"></ul>
+    </div>
+</body>
+</html>

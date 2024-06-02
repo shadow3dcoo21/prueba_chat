@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chat con Socket.IO</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        // Conexión de Socket.IO al servidor
+        var socket = io();
+
+        // Función para enviar mensajes del chat 1
+        function enviarMensaje1() {
+            var mensaje = document.getElementById('mensaje1').value;
+            socket.emit('chat message 1', mensaje);
+            document.getElementById('mensaje1').value = '';
+            return false;
+        }
+
+        // Función para recibir mensajes del chat 1
+        socket.on('chat message 1', function(msg){
+            agregarMensaje(msg, 'Chat 1', 'mensaje-enviado');
+        });
+
+        // Función para enviar mensajes del chat 2
+        function enviarMensaje2() {
+            var mensaje = document.getElementById('mensaje2').value;
+            socket.emit('chat message 2', mensaje);
+            document.getElementById('mensaje2').value = '';
+            return false;
+        }
+
+        // Función para recibir mensajes del chat 2
+        socket.on('chat message 2', function(msg){
+            agregarMensaje(msg, 'Chat 2', 'mensaje-recibido');
+        });
+
+        // Función para agregar mensajes a la lista de mensajes
+        function agregarMensaje(mensaje, chat, clase) {
+            var listaMensajes = document.getElementById('lista-mensajes');
+            var mensajeElement = document.createElement('li');
+            mensajeElement.textContent = chat + ': ' + mensaje;
+            mensajeElement.classList.add(clase); // Agregar clase de estilo según el tipo de mensaje
+            listaMensajes.appendChild(mensajeElement);
+        }
+    </script>
+    <style>
+        /* Estilos para los mensajes enviados */
+        .mensaje-enviado {
+            text-align: left;
+            background-color: #f0f0f0;
+            padding: 5px;
+            margin-bottom: 5px;
+        }
+
+        /* Estilos para los mensajes recibidos */
+        .mensaje-recibido {
+            text-align: right;
+            background-color: #e0e0e0;
+            padding: 5px;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Chat 1</h1>
+    <form onsubmit="return enviarMensaje1()">
+        <input id="mensaje1" autocomplete="off" />
+        <button>Enviar</button>
+    </form>
+
+    <h1>Chat 2</h1>
+    <form onsubmit="return enviarMensaje2()">
+        <input id="mensaje2" autocomplete="off" />
+        <button>Enviar</button>
+    </form>
+
+    <h1>Mensajes</h1>
+    <ul id="lista-mensajes"></ul>
+</body>
+</html>

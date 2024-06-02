@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Formulario de Imagen</title>
+  <script src="/socket.io/socket.io.js"></script>
+  <style>
+    .image_ {
+      width: 40px;
+      height: 40px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Formulario de Imagen</h1>
+  <form id="formImagen" action="/upload" method="POST" enctype="multipart/form-data">
+    <label for="nombre">Nombre:</label>
+    <input type="text" id="nombre" name="nombre" required><br><br>
+    <label for="imagen">Imagen:</label>
+    <input type="file" id="imagen" name="imagen" accept="image/*" required><br><br>
+    <button type="submit">Enviar</button>
+  </form>
+
+  <div id="resultado"></div>
+
+  <div id="chat" style="display: none;">
+    <h2>Bienvenido,<span id="nombreUsuarioMostrado"></span>!</h2>
+    <img id="imagenMostrada" src="" alt="Imagen del usuario">
+
+    <h1>Chat</h1>
+    <form id="formMensajes">
+        <input type="text" id="mensaje" placeholder="Escribe tu mensaje">
+        <button type="submit">Enviar</button>
+    </form>
+
+    <h2>Mensajes</h2>
+    <ul id="lista-mensajes"></ul>
+  </div>
+
+  <script>
+    var socket = io();
+
+    document.addEventListener('DOMContentLoaded', function() {
+      var nombreUsuario = null;
+      
+      const form = document.getElementById('formImagen');
+      const resultado = document.getElementById('resultado');
+      
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const formData = new FormData(form);
+        const response = await fetch('/upload', {
+          method: 'POST',
+          body: formData
+        });
+        
+        const data = await response.json();
+        resultado.innerHTML = `<p>Nombre: ${data.nombre}</p><img class="image_" src="${data.imageUrl}" alt="Imagen">`;
+        document.getElementById('chat').style.display = 'block';
+        
+        nombreUsuario = document.getElementById('nombre').value;
+        form.reset();
+      });
+
+      document.getElementById('formMensajes').addEventListener('submit', function(event) {
+        event.preventDefault();
+        var mensaje = document.getElementById('mensaje').value;
+
+        if (mensaje.trim() !== '') {
+          socket.emit('chat message', { nombre: nombreUsuario, mensaje: mensaje });
+          document.getElementById('mensaje').value = '';
+        } else {
+          alert('Por favor ingrese un mensaje válido.');
+        }
+      });
+
+      
+
+      socket.on('chat message', function(data) {
+    var listaMensajes = document.getElementById('lista-mensajes');
+    var mensaje = document.createElement('li');
+
+    // Crear un contenedor para el mensaje
+    var mensajeContainer = document.createElement('div');
+
+    // Crear un elemento para mostrar el nombre y el mensaje
+    var contenidoMensaje = document.createElement('span');
+    contenidoMensaje.textContent = data.nombre + ': ' + data.mensaje;
+
+    // Crear un elemento para la imagen y establecer su atributo src
+    var imagenUsuario = document.createElement('img');
+    imagenUsuario.src = data.imageUrl;
+    imagenUsuario.alt = 'Imagen del usuario';
+    imagenUsuario.style.width = '50px'; // Ajustar el tamaño de la imagen según sea necesario
+
+    // Agregar la imagen al contenido del mensaje
+    contenidoMensaje.appendChild(imagenUsuario);
+
+    // Agregar el contenido del mensaje al contenedor
+    mensajeContainer.appendChild(contenidoMensaje);
+
+    // Agregar el contenedor al mensaje
+    mensaje.appendChild(mensajeContainer);
+
+    // Agregar el mensaje a la lista de mensajes
+    listaMensajes.appendChild(mensaje);
+});
+
+    });
+  </script>
+</body>
+</html>
